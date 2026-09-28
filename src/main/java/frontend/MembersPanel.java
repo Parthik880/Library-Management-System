@@ -138,6 +138,33 @@ public class MembersPanel extends JPanel {
 
         JScrollPane scrollPane =
                 new JScrollPane(table);
+        table.setAutoResizeMode(
+        JTable.AUTO_RESIZE_OFF
+        );
+
+        table.getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(320);
+
+        table.getColumnModel()
+                .getColumn(1)
+                .setPreferredWidth(220);
+
+        table.getColumnModel()
+                .getColumn(2)
+                .setPreferredWidth(180);
+
+
+        scrollPane.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+        );
+
+        scrollPane.setHorizontalScrollBarPolicy(
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        );
+
+        scrollPane.getVerticalScrollBar()
+                .setUnitIncrement(16);
 
 
         JPanel centerPanel =
@@ -681,6 +708,16 @@ public class MembersPanel extends JPanel {
                 )
         );
 
+        scroll.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+        );
+
+        scroll.setHorizontalScrollBarPolicy(
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        );
+
+        scroll.getVerticalScrollBar()
+                .setUnitIncrement(16);
 
         JOptionPane.showMessageDialog(
                 this,
