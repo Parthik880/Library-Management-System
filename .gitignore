@@ -1,0 +1,8 @@
+target/
+out/
+.idea/
+.vscode/
+*.class
+*.log
+.env
+library_db_backup.sql
