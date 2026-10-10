@@ -8,6 +8,7 @@ import java.sql.*;
 public class StudentView {
     private static final Color NAVY = new Color(24, 58, 102), BORDER = new Color(220, 225, 232);
     private static String rollNo;
+    private static final JTextField search = new JTextField(20);
     private static final JTable availableTable = table("Book Name", "Author", "Available Copies");
     private static final JTable issuedTable = table("Book Name", "Issue Date", "Due Date", "Fine");
     public static void main(String[] args) {
@@ -20,7 +21,7 @@ public class StudentView {
         JFrame frame = new JFrame("Library Student View"); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); frame.setLayout(new BorderLayout());
         frame.add(header(), BorderLayout.NORTH);
         JTabbedPane tabs = new JTabbedPane(); tabs.setFont(new Font("SansSerif", Font.BOLD, 14));
-        tabs.addTab("  Available Books  ", tab(availableTable, null, frame)); tabs.addTab("  My Issued Books  ", tab(issuedTable, "View Details", frame));
+        tabs.addTab("  Available Books  ", availableTab(frame)); tabs.addTab("  My Issued Books  ", tab(issuedTable, "View Details", frame));
         JPanel content = new JPanel(new BorderLayout()); content.setBorder(new EmptyBorder(18, 22, 22, 22)); content.setBackground(new Color(244, 246, 249)); content.add(tabs);
         frame.add(content); frame.setSize(780, 500); frame.setLocationRelativeTo(null); frame.setVisible(true); loadAvailable(frame); loadIssued(frame);
     }
@@ -30,6 +31,16 @@ public class StudentView {
         JLabel title = new JLabel("Library Student View"); title.setFont(new Font("SansSerif", Font.BOLD, 23)); title.setForeground(Color.WHITE);
         JLabel user = new JLabel("Signed in as: " + rollNo.trim()); user.setFont(new Font("SansSerif", Font.PLAIN, 14)); user.setForeground(new Color(220, 232, 248));
         header.add(title, BorderLayout.NORTH); header.add(user, BorderLayout.SOUTH); return header;
+    }
+
+    private static JPanel availableTab(Component parent) {
+        JPanel panel = tab(availableTable, null, parent);
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT)); controls.setBackground(Color.WHITE);
+        controls.add(new JLabel("Search title or author")); controls.add(search);
+        JButton find = new JButton("Search"); find.addActionListener(e -> loadAvailable(parent)); controls.add(find);
+        JButton all = new JButton("View All"); all.addActionListener(e -> { search.setText(""); loadAvailable(parent); }); controls.add(all);
+        search.addActionListener(e -> loadAvailable(parent)); panel.add(controls, BorderLayout.NORTH);
+        return panel;
     }
 
     private static JPanel tab(JTable table, String buttonText, Component parent) {
@@ -54,9 +65,12 @@ public class StudentView {
     }
 
     private static void loadAvailable(Component parent) {
-        String sql = "SELECT title,author,available_copies FROM books WHERE available_copies>0 ORDER BY title";
+        String sql = "SELECT title,author,available_copies FROM books WHERE available_copies>0 AND (title ILIKE ? OR author ILIKE ?) ORDER BY title";
         DefaultTableModel model = (DefaultTableModel) availableTable.getModel(); model.setRowCount(0);
-        try (Connection con = connect(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) { while (rs.next()) model.addRow(new Object[]{rs.getString(1), rs.getString(2), rs.getInt(3)}); }
+        try (Connection con = connect(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, "%" + search.getText().trim() + "%"); ps.setString(2, "%" + search.getText().trim() + "%");
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) model.addRow(new Object[]{rs.getString(1), rs.getString(2), rs.getInt(3)}); }
+        }
         catch (SQLException e) { error(parent, e); }
     }
 
