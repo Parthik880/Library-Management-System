@@ -3,6 +3,8 @@ package library;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.sql.SQLException;
 
 public class IssueReturnPanel extends JPanel {
@@ -33,17 +35,37 @@ public class IssueReturnPanel extends JPanel {
         form.add(new JLabel("Member roll number")); form.add(roll);
         form.add(new JLabel("Book ID")); form.add(book);
         JButton view = Main.button("View Active Issue", false); view.addActionListener(e -> load()); form.add(view);
-        JButton issue = Main.button("Issue Book", true); issue.addActionListener(e -> issueBook()); form.add(issue);
+        JButton issue = Main.button("Issue Book", true); issue.setForeground(Color.BLACK); issue.addActionListener(e -> issueBook()); form.add(issue);
         JButton returned = Main.button("Return Book", false); returned.addActionListener(e -> returnBook()); form.add(returned);
         box.add(form, BorderLayout.SOUTH);
         return box;
     }
 
     private void issueBook() {
+        JTextField memberField = Main.input(18), bookField = Main.input(18);
+        memberField.setText(roll.getText().trim()); memberField.setEditable(false);
+        bookField.setText(book.getText().trim()); bookField.setEditable(false);
+        JTextField issueDateField = Main.input(18), dueDateField = Main.input(18);
+        LocalDate today = LocalDate.now();
+        issueDateField.setText(today.toString()); dueDateField.setText(today.plusDays(14).toString());
+        JPanel form = new JPanel(new GridLayout(0, 2, 10, 10));
+        form.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        form.add(new JLabel("Student roll number")); form.add(memberField);
+        form.add(new JLabel("Book ID")); form.add(bookField);
+        form.add(new JLabel("Issue date (YYYY-MM-DD)")); form.add(issueDateField);
+        form.add(new JLabel("Due date (YYYY-MM-DD)")); form.add(dueDateField);
+        Object[] options = {"Confirm Issue", "Cancel"};
+        if (JOptionPane.showOptionDialog(this, form, "Confirm Book Issue", JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE, null, options, options[0]) != 0) return;
         try {
-            Database.issueBook(roll.getText(), book.getText());
-            JOptionPane.showMessageDialog(this, "Book issued. The due date is 14 days from today.");
+            LocalDate issueDate = LocalDate.parse(issueDateField.getText().trim());
+            LocalDate dueDate = LocalDate.parse(dueDateField.getText().trim());
+            if (dueDate.isBefore(issueDate)) throw new SQLException("Due date cannot be before the issue date.");
+            Database.issueBook(memberField.getText(), bookField.getText(), issueDate, dueDate);
+            JOptionPane.showMessageDialog(this, "Book issued successfully.");
             load();
+        } catch (DateTimeParseException e) {
+            Main.error(this, new SQLException("Use dates in YYYY-MM-DD format."));
         } catch (SQLException e) { Main.error(this, e); }
     }
 

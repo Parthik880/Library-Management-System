@@ -1,6 +1,7 @@
 package library;
 
 import javax.swing.table.DefaultTableModel;
+import java.time.LocalDate;
 import java.sql.*;
 
 public class Database {
@@ -92,8 +93,10 @@ public class Database {
     }
 
     // The loan row and the available-copy change succeed or fail together.
-    static void issueBook(String roll, String book) throws SQLException {
+    static void issueBook(String roll, String book, LocalDate issueDate, LocalDate dueDate) throws SQLException {
         if (roll.isBlank() || book.isBlank()) throw new SQLException("Enter a member roll number and book ID.");
+        if (issueDate == null || dueDate == null || dueDate.isBefore(issueDate))
+            throw new SQLException("Due date cannot be before the issue date.");
         try (Connection con = connect()) {
             con.setAutoCommit(false);
             try {
@@ -109,8 +112,9 @@ public class Database {
                         if (rs.getInt(1) < 1) throw new SQLException("No copies are available.");
                     }
                 }
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO transactions (roll_no,book_id,due_date,status,fine) VALUES (?,?,CURRENT_DATE+14,'Issued',0)")) {
-                    ps.setString(1, roll.trim()); ps.setString(2, book.trim()); ps.executeUpdate();
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO transactions (roll_no,book_id,issue_date,due_date,status,fine) VALUES (?,?,?,?, 'Issued',0)")) {
+                    ps.setString(1, roll.trim()); ps.setString(2, book.trim());
+                    ps.setDate(3, Date.valueOf(issueDate)); ps.setDate(4, Date.valueOf(dueDate)); ps.executeUpdate();
                 }
                 changeCopies(con, book.trim(), -1); con.commit();
             } catch (SQLException e) { con.rollback(); throw e; }
