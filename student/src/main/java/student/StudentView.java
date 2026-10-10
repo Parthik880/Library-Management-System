@@ -43,7 +43,7 @@ public class StudentView {
         DefaultTableModel model = new DefaultTableModel(columns, 0) { public boolean isCellEditable(int row, int column) { return false; } };
         JTable table = new JTable(model); table.setFont(new Font("SansSerif", Font.PLAIN, 14)); table.setRowHeight(34); table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFillsViewportHeight(true); table.setGridColor(new Color(235, 238, 242)); table.setShowVerticalLines(false); table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
-        table.getTableHeader().setBackground(NAVY); table.getTableHeader().setForeground(Color.WHITE); table.getTableHeader().setPreferredSize(new Dimension(0, 36)); return table;
+        table.getTableHeader().setBackground(new Color(235, 240, 246)); table.getTableHeader().setForeground(Color.BLACK); table.getTableHeader().setPreferredSize(new Dimension(0, 36)); return table;
     }
 
     private static JScrollPane scroll(JTable table) { JScrollPane scroll = new JScrollPane(table); scroll.setBorder(new LineBorder(BORDER)); scroll.getVerticalScrollBar().setUnitIncrement(16); return scroll; }

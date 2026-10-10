@@ -56,7 +56,7 @@ public class Main {
         JTable table = new JTable(model); table.setFont(BODY); table.setRowHeight(34); table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setSelectionBackground(new Color(225, 236, 249)); table.setSelectionForeground(Color.BLACK); table.setGridColor(new Color(235, 238, 242));
         table.setShowVerticalLines(false); table.setFillsViewportHeight(true); table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
-        table.getTableHeader().setBackground(NAVY); table.getTableHeader().setForeground(Color.WHITE); table.getTableHeader().setPreferredSize(new Dimension(0, 36));
+        table.getTableHeader().setBackground(new Color(235, 240, 246)); table.getTableHeader().setForeground(Color.BLACK); table.getTableHeader().setPreferredSize(new Dimension(0, 36));
         return table;
     }
 
