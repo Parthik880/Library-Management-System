@@ -47,6 +47,43 @@ public class Database {
         }
     }
 
+    static int[] getBookStock(String id) throws SQLException {
+        try (Connection con = connect(); PreparedStatement ps = con.prepareStatement("SELECT total_copies,available_copies FROM books WHERE book_id=?")) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                int total = rs.getInt(1), available = rs.getInt(2);
+                return new int[]{total, total - available, available};
+            }
+        }
+    }
+
+    // Lock the book while active loans are counted, then save matching stock values.
+    static void changeAvailability(String id, int newTotal, int newAvailable) throws SQLException {
+        if (newTotal < 0 || newAvailable < 0 || newAvailable > newTotal)
+            throw new SQLException("Copies must be non-negative, and available copies cannot exceed total copies.");
+        try (Connection con = connect()) {
+            con.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = con.prepareStatement("SELECT book_id FROM books WHERE book_id=? FOR UPDATE")) {
+                    ps.setString(1, id); try (ResultSet rs = ps.executeQuery()) { if (!rs.next()) throw new SQLException("Book not found."); }
+                }
+                int issued;
+                try (PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM transactions WHERE book_id=? AND submission_date IS NULL")) {
+                    ps.setString(1, id); try (ResultSet rs = ps.executeQuery()) { rs.next(); issued = rs.getInt(1); }
+                }
+                if (newTotal < issued) throw new SQLException("New total copies cannot be less than " + issued + " currently issued copies.");
+                int expectedAvailable = newTotal - issued;
+                if (newAvailable != expectedAvailable)
+                    throw new SQLException("New available copies must be " + expectedAvailable + " for the current issued copies.");
+                try (PreparedStatement ps = con.prepareStatement("UPDATE books SET total_copies=?,available_copies=? WHERE book_id=?")) {
+                    ps.setInt(1, newTotal); ps.setInt(2, newAvailable); ps.setString(3, id); ps.executeUpdate();
+                }
+                con.commit();
+            } catch (SQLException e) { con.rollback(); throw e; }
+        }
+    }
+
     static void loadMembers(DefaultTableModel model, String word) throws SQLException {
         model.setRowCount(0);
         String sql = "SELECT roll_no,name,email,phone,year,branch FROM members "

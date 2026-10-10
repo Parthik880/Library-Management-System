@@ -2,6 +2,8 @@ package library;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.sql.SQLException;
 
@@ -37,6 +39,8 @@ public class BooksPanel extends JPanel {
         JButton find = Main.button("Search", false); find.addActionListener(e -> load()); actions.add(find);
         JButton all = Main.button("View All", false); all.addActionListener(e -> { search.setText(""); load(); }); actions.add(all);
         JButton add = Main.button("+ Add Book", true); add.addActionListener(e -> showAddForm()); actions.add(add);
+        JButton availability = Main.button("Change Availability", false); availability.setForeground(Color.BLACK);
+        availability.addActionListener(e -> showAvailabilityDialog()); actions.add(availability);
         JButton delete = Main.button("Delete Selected", false); delete.addActionListener(e -> deleteBook()); actions.add(delete);
         search.addActionListener(e -> load());
         box.add(actions, BorderLayout.SOUTH);
@@ -71,6 +75,46 @@ public class BooksPanel extends JPanel {
                 JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
         try { Database.deleteBook(id); JOptionPane.showMessageDialog(this, "Book deleted."); load(); }
         catch (SQLException e) { Main.error(this, e); }
+    }
+
+    private void showAvailabilityDialog() {
+        int row = table.getSelectedRow();
+        if (row < 0) { JOptionPane.showMessageDialog(this, "Select a book first."); return; }
+        String id = model.getValueAt(row, 0).toString();
+        try {
+            int[] stock = Database.getBookStock(id);
+            if (stock == null) throw new SQLException("Book not found.");
+            JTextField bookId = Main.input(16), title = Main.input(16), total = Main.input(16);
+            JTextField issued = Main.input(16), available = Main.input(16), newTotal = Main.input(16), newAvailable = Main.input(16);
+            bookId.setText(id); bookId.setEditable(false); title.setText(model.getValueAt(row, 1).toString()); title.setEditable(false);
+            total.setText(String.valueOf(stock[0])); total.setEditable(false); issued.setText(String.valueOf(stock[1])); issued.setEditable(false);
+            available.setText(String.valueOf(stock[2])); available.setEditable(false);
+            newTotal.setText(String.valueOf(stock[0])); newAvailable.setText(String.valueOf(stock[2]));
+            boolean[] changingAvailable = {false}, availableEdited = {false};
+            newAvailable.getDocument().addDocumentListener(changeListener(() -> { if (!changingAvailable[0]) availableEdited[0] = true; }));
+            newTotal.getDocument().addDocumentListener(changeListener(() -> {
+                if (availableEdited[0]) return;
+                try { changingAvailable[0] = true; newAvailable.setText(String.valueOf(Integer.parseInt(newTotal.getText().trim()) - stock[1])); }
+                catch (NumberFormatException ignored) { } finally { changingAvailable[0] = false; }
+            }));
+            JPanel form = new JPanel(new GridLayout(0, 2, 10, 10)); form.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+            addField(form, "Book ID", bookId); addField(form, "Book title", title); addField(form, "Current total copies", total);
+            addField(form, "Currently issued copies", issued); addField(form, "Current available copies", available);
+            addField(form, "New total copies", newTotal); addField(form, "New available copies", newAvailable);
+            Object[] options = {"Save Changes", "Cancel"};
+            if (JOptionPane.showOptionDialog(this, form, "Change Availability", JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE, null, options, options[0]) != 0) return;
+            Database.changeAvailability(id, Main.number(newTotal, "New total copies"), Main.number(newAvailable, "New available copies"));
+            JOptionPane.showMessageDialog(this, "Book availability updated."); load();
+        } catch (SQLException e) { Main.error(this, e); }
+    }
+
+    private DocumentListener changeListener(Runnable change) {
+        return new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { change.run(); }
+            public void removeUpdate(DocumentEvent e) { change.run(); }
+            public void changedUpdate(DocumentEvent e) { change.run(); }
+        };
     }
 
     void load() {

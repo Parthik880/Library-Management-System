@@ -19,18 +19,25 @@ public class StudentView {
     private static void open() {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignored) { }
         JFrame frame = new JFrame("Library Student View"); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); frame.setLayout(new BorderLayout());
-        frame.add(header(), BorderLayout.NORTH);
+        frame.add(header(frame), BorderLayout.NORTH);
         JTabbedPane tabs = new JTabbedPane(); tabs.setFont(new Font("SansSerif", Font.BOLD, 14));
         tabs.addTab("  Available Books  ", availableTab(frame)); tabs.addTab("  My Issued Books  ", tab(issuedTable, "View Details", frame));
         JPanel content = new JPanel(new BorderLayout()); content.setBorder(new EmptyBorder(18, 22, 22, 22)); content.setBackground(new Color(244, 246, 249)); content.add(tabs);
-        frame.add(content); frame.setSize(780, 500); frame.setLocationRelativeTo(null); frame.setVisible(true); loadAvailable(frame); loadIssued(frame);
+        frame.add(content); frame.setSize(780, 500); frame.setLocationRelativeTo(null); frame.setVisible(true);
+        new javax.swing.Timer(3000, e -> {
+            loadAvailable(frame);
+            loadIssued(frame);
+        }).start();
     }
 
-    private static JPanel header() {
+    private static JPanel header(Component parent) {
         JPanel header = new JPanel(new BorderLayout()); header.setBackground(NAVY); header.setBorder(new EmptyBorder(17, 24, 17, 24));
         JLabel title = new JLabel("Library Student View"); title.setFont(new Font("SansSerif", Font.BOLD, 23)); title.setForeground(Color.WHITE);
         JLabel user = new JLabel("Signed in as: " + rollNo.trim()); user.setFont(new Font("SansSerif", Font.PLAIN, 14)); user.setForeground(new Color(220, 232, 248));
-        header.add(title, BorderLayout.NORTH); header.add(user, BorderLayout.SOUTH); return header;
+        JPanel labels = new JPanel(); labels.setLayout(new BoxLayout(labels, BoxLayout.Y_AXIS)); labels.setBackground(NAVY); labels.add(title); labels.add(user);
+        JButton refresh = new JButton("Refresh"); refresh.setForeground(Color.BLACK); refresh.setFont(new Font("SansSerif", Font.BOLD, 13));
+        refresh.addActionListener(e -> { loadAvailable(parent); loadIssued(parent); });
+        header.add(labels, BorderLayout.WEST); header.add(refresh, BorderLayout.EAST); return header;
     }
 
     private static JPanel availableTab(Component parent) {

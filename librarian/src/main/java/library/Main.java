@@ -46,7 +46,7 @@ public class Main {
     static JButton button(String text, boolean primary) {
         JButton button = new JButton(text); button.setFont(new Font("SansSerif", Font.BOLD, 13));
         button.setFocusPainted(false); button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); button.setMargin(new Insets(8, 14, 8, 14));
-        if (primary) { button.setBackground(BLUE); button.setForeground(Color.WHITE); button.setBorder(new EmptyBorder(8, 14, 8, 14)); }
+        if (primary) { button.setBackground(BLUE); button.setForeground(Color.BLACK); button.setBorder(new EmptyBorder(8, 14, 8, 14)); }
         else { button.setBackground(Color.WHITE); button.setForeground(NAVY); button.setBorder(new CompoundBorder(new LineBorder(BORDER), new EmptyBorder(7, 13, 7, 13))); }
         return button;
     }
