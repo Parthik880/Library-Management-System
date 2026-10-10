@@ -58,7 +58,7 @@ public class Database {
         }
     }
 
-    // Lock the book while active loans are counted, then save matching stock values.
+    // Lock the book while active loans are counted, then save the librarian's stock values.
     static void changeAvailability(String id, int newTotal, int newAvailable) throws SQLException {
         if (newTotal < 0 || newAvailable < 0 || newAvailable > newTotal)
             throw new SQLException("Copies must be non-negative, and available copies cannot exceed total copies.");
@@ -73,9 +73,6 @@ public class Database {
                     ps.setString(1, id); try (ResultSet rs = ps.executeQuery()) { rs.next(); issued = rs.getInt(1); }
                 }
                 if (newTotal < issued) throw new SQLException("New total copies cannot be less than " + issued + " currently issued copies.");
-                int expectedAvailable = newTotal - issued;
-                if (newAvailable != expectedAvailable)
-                    throw new SQLException("New available copies must be " + expectedAvailable + " for the current issued copies.");
                 try (PreparedStatement ps = con.prepareStatement("UPDATE books SET total_copies=?,available_copies=? WHERE book_id=?")) {
                     ps.setInt(1, newTotal); ps.setInt(2, newAvailable); ps.setString(3, id); ps.executeUpdate();
                 }
